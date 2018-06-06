@@ -10,55 +10,82 @@ const onLoad = () => {
       this.x = x
       this.y = y
     }
+
+    key() {
+      return `${this.x}_${this.y}`
+    }
   }
 
-  const size = 10
+  const size = 2
 
-  const screenWidth = window.innerWidth / size
-  const screenHeight = window.innerHeight / size
+  const screenWidth = Math.floor(window.innerWidth / size)
+  const screenHeight = Math.floor(window.innerHeight / size)
 
-  const baseX = screenWidth / 2
-  const baseY = screenHeight / 2
+  const baseX = Math.floor(screenWidth / 2)
+  const baseY = Math.floor(screenHeight / 2)
   
-  let nodes = [
+ const rPentomino = [
     new Node(baseX, baseY),
     new Node(baseX, baseY + 1),
     new Node(baseX + 1, baseY + 1),
     new Node(baseX - 1, baseY),
     new Node(baseX, baseY - 1)
   ]
+
+  const acorn = [
+    new Node(baseX, baseY),
+    new Node(baseX - 2, baseY - 1),
+    new Node(baseX - 2, baseY + 1),
+    new Node(baseX - 3, baseY - 1),
+    new Node(baseX + 1, baseY - 1),
+    new Node(baseX + 2, baseY - 1),
+    new Node(baseX + 3, baseY - 1),
+  ]
+
+  let nodes = acorn
   let cycles = -1
-  let invervalId
 
-  const liveOrDie = (x, y) => {
-    const neighbors = nodes.filter(n => [
-        n.x - 1 === x && n.y === y,
-        n.x + 1 === x && n.y === y,
-        n.x === x && n.y - 1 === y,
-        n.x === x && n.y + 1 === y
-      ].indexOf(true) !== -1
-    )
-    if (neighbors.length === 2 || neighbors.length === 3) {
-      return true
-    }
-    return false
-  }
+  const isNegative = n => (1 / n) < 0
 
-  const processCoord = (x, y, newList = []) => {
-    const doesLive = liveOrDie(x, y)
-    if (doesLive) {
-      newList.push(new Node(x, y))
+  const processCoord = (x, y, neighborMap) => {
+    const key = `${x}_${y}`
+    let val = neighborMap.get(key)
+    if (!val) {
+      val = 0
     }
+    neighborMap.set(key, isNegative(val) ? val - 1 : val + 1)
   }
 
   const nextStep = () => {
     const newList = []
+    const neighborMap = new Map()
+    nodes.forEach(node => neighborMap.set(node.key(), -100))
     for (const node of nodes) {
-      processCoord(node.x, node.y, newList)
-      processCoord(node.x + 1, node.y, newList)
-      processCoord(node.x - 1, node.y, newList)
-      processCoord(node.x, node.y + 1, newList)
-      processCoord(node.x, node.y - 1, newList)
+      processCoord(node.x, node.y + 1, neighborMap)
+      processCoord(node.x + 1, node.y + 1, neighborMap)
+      processCoord(node.x + 1, node.y, neighborMap)
+      processCoord(node.x + 1, node.y - 1, neighborMap)
+      processCoord(node.x, node.y - 1, neighborMap)
+      processCoord(node.x - 1, node.y - 1, neighborMap)
+      processCoord(node.x - 1, node.y, neighborMap)
+      processCoord(node.x - 1, node.y + 1, neighborMap)
+    }
+    for (const key of neighborMap.keys()) {
+      const parts = key.split('_')
+      const x = parseInt(parts[0], 10)
+      const y = parseInt(parts[1], 10)
+      let val = neighborMap.get(key)
+      const isAlive = isNegative(val)
+      if (isAlive) {
+        val += 100
+      }
+      const neighbors = isAlive ? -val : val
+      if (
+        neighbors === 3 ||
+        (isAlive && neighbors === 2)
+      ) {
+        newList.push(new Node(x, y))
+      }
     }
     nodes = newList
   }
@@ -67,18 +94,19 @@ const onLoad = () => {
     cycles++
     context.clearRect(0, 0, canvas.width, canvas.height)
     context.beginPath()
-    context.font = '20px arial'
+    context.font = '16px arial'
     context.fillText(`Cycle #${cycles}`, 20, 40)
     for (const node of nodes) {
+      context.fillStyle = 'rgb(0,0,0)'
       context.fillRect(node.x * size, node.y * size, size, size)
+      // context.fillStyle = 'rgb(255,0,0)'
+      // context.font = '15px arial'
+      // context.fillText(node.key(), node.x * size + 10, node.y * size + 30)
     }
     context.stroke()
     nextStep()
-    if (cycles === 45) {
-      clearInterval(intervalId)
-    }
   }
   
   nextCycle()
-  intervalId = setInterval(nextCycle, 100)
+ setInterval(nextCycle, 10)
 }
