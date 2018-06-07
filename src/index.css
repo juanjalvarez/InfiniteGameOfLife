@@ -1,0 +1,29 @@
+*, *:before, *:after {
+  box-sizing: border-box;
+}
+
+html, body, #root, #subroot, canvas {
+  width: 100%;
+  height: 100%;
+  padding: 0px;
+  margin: 0px;
+}
+
+#root {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50px;
+  background-color: rgba(0, 0, 0, 0.3)
+}
+
+.dashboard {
+  height: 100%;
+  padding: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
+}
